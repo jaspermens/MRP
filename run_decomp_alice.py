@@ -4,9 +4,10 @@ from amuse.lab import write_set_to_file
 from amuse.community.ph4.interface import Ph4
 
 import numpy as np
+import os
 
 from decompose_multiples import find_composite_multiples
-
+from helpers import check_clean_directory
 
 def do_run(n_stars: int, 
            snapshot_frequency: float, 
@@ -85,8 +86,13 @@ def get_max_hardness_in_decomp_list(decomp_list: list) -> float:
 
 
 def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_hardness_kt: float) -> None:
-    main_output_directory = f'~/data1/output/n{n_stars}'
-    # TODO: all in one file (done)
+    if os.path.exists('~/data1/output'):
+        main_output_directory = f'~/data1/output/n{n_stars}'
+    else:
+        main_output_directory = f'output/n{n_stars}'
+    
+    check_clean_directory(main_output_directory)
+
     # TODO: prototype plots -> make sure we can parse the stuff efficiently
     # TODO: prototype binary hardness history -> traverse history backwards and keep track of hardness of... hardest binary?
     # TODO: snapshot cadence naar 2^-3 (of maybe of 2^-4)?? idk. Allebei prima, data is goedkoop I guess. Variabele!
@@ -96,7 +102,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
     for i in range(n_runs):
         output_directory = f'{main_output_directory}/run_{i}' 
-
+        os.mkdir(output_directory)
+        
         rng = np.random.default_rng(seed=i)
 
         do_run(ouput_directory=output_directory, n_stars=n_stars, snapshot_frequency=snapshot_frequency, rng=rng, min_hardness_kt=min_hardness_kt)
