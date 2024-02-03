@@ -86,8 +86,8 @@ def get_max_hardness_in_decomp_list(decomp_list: list) -> float:
 
 
 def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_hardness_kt: float) -> None:
-    if os.path.exists('~/data1/output'):
-        main_output_directory = f'~/data1/output/n{n_stars}'
+    if os.path.exists('/home/s2015242/data1/output'):
+        main_output_directory = f'/home/s2015242/data1/output/n{n_stars}'
     else:
         main_output_directory = f'output/n{n_stars}'
     
@@ -103,7 +103,7 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     for i in range(n_runs):
         output_directory = f'{main_output_directory}/run_{i}' 
         os.mkdir(output_directory)
-        
+
         rng = np.random.default_rng(seed=i)
 
         do_run(ouput_directory=output_directory, n_stars=n_stars, snapshot_frequency=snapshot_frequency, rng=rng, min_hardness_kt=min_hardness_kt)
