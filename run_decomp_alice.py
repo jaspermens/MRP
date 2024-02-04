@@ -17,8 +17,11 @@ def do_run(n_stars: int,
            stop_delay: int = 10,
            t_end: float = 200,
            ) -> None:
-    
-    rng = np.random.default_rng(rng_seed)
+
+    if rng_seed:
+        rng = np.random.default_rng(rng_seed)
+    else:
+        rng = np.random.default_rng()
 
     gravity = Ph4()
     plummer = new_plummer_model(n_stars, random=rng)
@@ -91,7 +94,9 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     if running_on_alice():
         main_output_directory = f'/home/s2015242/data1/{main_output_directory}'
     
-    check_clean_directory(main_output_directory)
+    if not os.path.exists(main_output_directory):
+        raise FileNotFoundError("Output directory not found")
+    # check_clean_directory(main_output_directory)
 
     # TODO: prototype plots -> make sure we can parse the stuff efficiently
     # TODO: prototype binary hardness history -> traverse history backwards and keep track of hardness of... hardest binary?
@@ -100,8 +105,15 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     # TODO: when stop run? -> parse history somehow I guess
     # TODO: history parser that does non-hierarchical systems
 
-    for i in range(n_runs):
-        output_directory = f'{main_output_directory}/run_{i}' 
+    for _ in range(n_runs):
+        i = len(os.listdir(main_output_directory))
+        output_directory = f'{main_output_directory}/run_{i}'
+
+        if os.path.exists(output_directory):
+            output_directory = f'{main_output_directory}/run_{i+1}'
+            if os.path.exists(output_directory):
+                raise FileExistsError(f"Output directories run_{i} and run_{i+1} already exists! Seems like someone did a fucky...")
+        
         os.mkdir(output_directory)
 
         do_run(n_stars=n_stars, 
@@ -137,4 +149,4 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
 
 if __name__ in '__main__':
-    make_buncha_data(n_runs=1, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
+    make_buncha_data(n_runs=10, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
