@@ -7,6 +7,11 @@ custom_tqdm = lambda x, total: tqdm(x,ascii =" ▏▎▍▌▋▊▉█", ncols=
 # " ▖▘▝▗▚▞█"
 # " ▏▎▍▌▋▊▉█"
 
+
+def running_on_alice() -> bool:
+    return os.path.exists('/home/s2015242/data1/output')
+
+
 def stitch_movie(image_directory: str, filename: str, out_directory: str, delete_images=False) -> None:
     command = f"ffmpeg -start_number 0 -i {image_directory}/movie-%04d.png -c:v libx264 -vb 20M -r 20 -pix_fmt yuv420p -filter:v 'setpts=2*PTS' -y {out_directory}/{filename}.mp4"
     print(command)
