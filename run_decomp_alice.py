@@ -109,7 +109,7 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
     def claim_directory():
         i = get_i()
-        output_directory = f'{main_output_directory}/run_{i}'
+        output_directory = f'{main_output_directory}/run_{i:>04}'
         try:
             os.mkdir(output_directory)
         except FileExistsError:
