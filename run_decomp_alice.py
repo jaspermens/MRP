@@ -110,18 +110,15 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     def claim_directory():
         i = get_i()
         output_directory = f'{main_output_directory}/run_{i}'
-        if os.path.exists(output_directory):
-            return False
+        try:
+            os.mkdir(output_directory)
+        except FileExistsError:
+            return claim_directory()
         
-        os.mkdir(output_directory)
-
         return output_directory
 
     for _ in range(n_runs):
         output_directory = claim_directory()
-        while not output_directory:
-            time.sleep(np.random.randint(low=10, high=100)/10)
-            output_directory = claim_directory()
 
         do_run(n_stars=n_stars, 
                snapshot_frequency=snapshot_frequency, 
@@ -156,8 +153,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
 
 if __name__ in '__main__':
-    import time
-    sleep_time = np.random.randint(low=0, high=100)
-    time.sleep(sleep_time/10)
+    # import time
+    # sleep_time = np.random.randint(low=0, high=100)
+    # time.sleep(sleep_time/10)
     # print(sleep_time/10)
     make_buncha_data(n_runs=10, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
