@@ -115,16 +115,16 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
         except FileExistsError:
             return claim_directory()
         
-        return output_directory
+        return output_directory, i
 
     for _ in range(n_runs):
-        output_directory = claim_directory()
+        output_directory, i = claim_directory()
 
         do_run(n_stars=n_stars, 
                snapshot_frequency=snapshot_frequency, 
                output_directory=output_directory, 
                min_hardness_kt=min_hardness_kt, 
-               rng_seed=get_i())
+               rng_seed=i)
 
 
 # def test_diff_step_sizes():
