@@ -104,26 +104,30 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     # EERST op alice aan zetten, dan ondertussen aan het werk. Anders zonde en moet je vet lang wachten op resultaten :)
     # TODO: when stop run? -> parse history somehow I guess
     # TODO: history parser that does non-hierarchical systems
+    
+    get_i = lambda: len(os.listdir(main_output_directory))
 
-    for _ in range(n_runs):
-        i = len(os.listdir(main_output_directory))
+    def claim_directory():
+        i = get_i()
         output_directory = f'{main_output_directory}/run_{i}'
-
         if os.path.exists(output_directory):
-            time.sleep(np.random.randint(low=0, high=100)/10)
-            i = len(os.listdir(main_output_directory))
-            output_directory = f'{main_output_directory}/run_{i}'
-
-            if os.path.exists(output_directory):
-                raise FileExistsError(f"Output directories run_{i} and run_{i+1} already exists! Seems like someone did a fucky...")
+            return False
         
         os.mkdir(output_directory)
+
+        return output_directory
+
+    for _ in range(n_runs):
+        output_directory = claim_directory()
+        while not output_directory:
+            time.sleep(np.random.randint(low=10, high=100)/10)
+            output_directory = claim_directory()
 
         do_run(n_stars=n_stars, 
                snapshot_frequency=snapshot_frequency, 
                output_directory=output_directory, 
                min_hardness_kt=min_hardness_kt, 
-               rng_seed=i)
+               rng_seed=get_i())
 
 
 # def test_diff_step_sizes():
