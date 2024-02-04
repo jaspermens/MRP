@@ -110,7 +110,10 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
         output_directory = f'{main_output_directory}/run_{i}'
 
         if os.path.exists(output_directory):
-            output_directory = f'{main_output_directory}/run_{i+1}'
+            time.sleep(np.random.randint(low=0, high=20)/10)
+            i = len(os.listdir(main_output_directory))
+            output_directory = f'{main_output_directory}/run_{i}'
+
             if os.path.exists(output_directory):
                 raise FileExistsError(f"Output directories run_{i} and run_{i+1} already exists! Seems like someone did a fucky...")
         
@@ -149,4 +152,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
 
 if __name__ in '__main__':
+    import time
+    sleep_time = np.random.randint(low=0, high=50)
+    time.sleep(sleep_time/10)
+    # print(sleep_time/10)
     make_buncha_data(n_runs=10, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
