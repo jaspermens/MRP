@@ -104,9 +104,11 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
         output_directory = f'{main_output_directory}/run_{i}' 
         os.mkdir(output_directory)
 
-        rng = np.random.default_rng(seed=i)
-
-        do_run(ouput_directory=output_directory, n_stars=n_stars, snapshot_frequency=snapshot_frequency, rng=rng, min_hardness_kt=min_hardness_kt)
+        do_run(n_stars=n_stars, 
+               snapshot_frequency=snapshot_frequency, 
+               output_directory=output_directory, 
+               min_hardness_kt=min_hardness_kt, 
+               rng_seed=i)
 
 
 # def test_diff_step_sizes():
