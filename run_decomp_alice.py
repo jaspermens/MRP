@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 from decompose_multiples import find_composite_multiples
-from helpers import check_clean_directory
+from helpers import check_clean_directory, running_on_alice
 
 def do_run(n_stars: int, 
            snapshot_frequency: float, 
@@ -86,10 +86,10 @@ def get_max_hardness_in_decomp_list(decomp_list: list) -> float:
 
 
 def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_hardness_kt: float) -> None:
-    if os.path.exists('/home/s2015242/data1/output'):
-        main_output_directory = f'/home/s2015242/data1/output/n{n_stars}'
-    else:
-        main_output_directory = f'output/n{n_stars}'
+    main_output_directory = f'output/n_{n_stars}'
+
+    if running_on_alice():
+        main_output_directory = f'/home/s2015242/data1/{main_output_directory}'
     
     check_clean_directory(main_output_directory)
 
@@ -138,12 +138,3 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
 if __name__ in '__main__':
     make_buncha_data(n_runs=10, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
-    # test_hardness_from_decomp()
-    # do_run(n_stars=16, snapshot_frequency=10, t_end=5, min_hardness_kt=1, output_directory='output/test', rng_seed=1)
-    # do_run(n_stars=16, snapshot_frequency=2**6, output_directory='output/test', min_hardness_kt=2, rng_seed=123)
-    # test_diff_step_sizes()
-    # 2**6: 30
-    # 100: 18
-    # 2**7: 10??
-    # so: smaller timestep means earlier BF...
-    # also for some reason seed 123 starts with a 6kT binary??? (which seems to dissolve quite quickly)
