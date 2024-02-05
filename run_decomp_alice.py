@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 from decompose_multiples import find_composite_multiples
-from helpers import check_clean_directory, running_on_alice
+from helpers import running_on_alice
 
 def do_run(n_stars: int, 
            snapshot_frequency: float, 
@@ -61,12 +61,11 @@ def do_run(n_stars: int,
             continue
             
         if patience > stop_delay:
-            gravity.stop()
-            outfile.close()
-            return step
+            break
             
         patience += 1
 
+    outfile.write(f'Done!\n{model_time}')
     gravity.stop()
     outfile.close() 
 
