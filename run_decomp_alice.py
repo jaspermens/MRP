@@ -9,6 +9,7 @@ import os
 from decompose_multiples import find_composite_multiples
 from helpers import running_on_alice
 
+
 def do_run(n_stars: int, 
            snapshot_frequency: float, 
            output_directory: str, 
@@ -54,7 +55,7 @@ def do_run(n_stars: int,
         justmultiples = [id for id in ids if len(id) > 5]
 
         max_inner_hardness = get_max_hardness_in_decomp_list(justmultiples)
-        outfile.write(f'\ntime: {step:.2f} - decomposition: {justmultiples}')
+        outfile.write(f'\ntime: {step:.3f} - decomposition: {justmultiples}')
         
         if max_inner_hardness < 10:
             patience = 0
@@ -65,7 +66,7 @@ def do_run(n_stars: int,
             
         patience += 1
 
-    outfile.write(f'Done!\n{model_time}')
+    outfile.write(f'\nEnd time:\n{model_time.value_in(nbody_system.time):.2f}')
     gravity.stop()
     outfile.close() 
 
@@ -92,18 +93,24 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
     if running_on_alice():
         main_output_directory = f'/home/s2015242/data1/{main_output_directory}'
-    
+    else:
+        main_output_directory = f'/home/jasper/studie/MRP/{main_output_directory}'
+
     if not os.path.exists(main_output_directory):
-        raise FileNotFoundError("Output directory not found")
-    # check_clean_directory(main_output_directory)
+        print(os.getcwd())
+        raise FileNotFoundError(f"Output directory {main_output_directory} not found")
 
     # TODO: prototype plots -> make sure we can parse the stuff efficiently
     # TODO: prototype binary hardness history -> traverse history backwards and keep track of hardness of... hardest binary?
     # TODO: snapshot cadence naar 2^-3 (of maybe of 2^-4)?? idk. Allebei prima, data is goedkoop I guess. Variabele!
     # EERST op alice aan zetten, dan ondertussen aan het werk. Anders zonde en moet je vet lang wachten op resultaten :)
-    # TODO: when stop run? -> parse history somehow I guess
-    # TODO: history parser that does non-hierarchical systems
     
+    # TODO: write to scratch and move to data1 once done, or maybe just keep the history and snapshots in memory?
+    # TODO: argparser!!
+    # TODO: test multicore speed => seems to work just fine! Not great, but fine! 4 processes did it 3x as fast. 
+    # TODO: test if read/write is bottleneck -> fewer snapshots(?)
+    # TODO: right-align the particle indices in the history. Probably makes computer parsing easier...
+
     get_i = lambda: len(os.listdir(main_output_directory))
 
     def claim_directory():
@@ -123,7 +130,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
                snapshot_frequency=snapshot_frequency, 
                output_directory=output_directory, 
                min_hardness_kt=min_hardness_kt, 
-               rng_seed=i)
+               rng_seed=i,
+               )
 
 
 # def test_diff_step_sizes():
