@@ -9,21 +9,25 @@ if __name__ in '__main__':
         '--nstars', 
         default=16, 
         help='Number of stars in the runs', 
+        type=int,
         )
     parser.add_argument(
         '--nchkpt', 
         default=128, 
         help='checkpoint frequency',
+        type=int,
         )
     parser.add_argument(
         '--nruns', 
         default=10, 
         help='Number of runs',
+        type=int,
         )
     parser.add_argument(
         '--min_hardness_kt', 
         default=1, 
         help='Minimum hardness for binary membership',
+        type=int,
         )
     args = parser.parse_args()
     
