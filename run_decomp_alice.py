@@ -26,7 +26,7 @@ def do_run(n_stars: int,
 
     gravity = Ph4()
     plummer = new_plummer_model(n_stars, random=rng)
-    plummer.id = [f'{i}' for i in range(n_stars)]
+    plummer.id = [f'{i:>02}' for i in range(n_stars)]
 
     snapshot_filename = f'{output_directory}/snapshots.log' # just one file because fuck it
     history_filename = f'{output_directory}/history.txt'
@@ -41,6 +41,7 @@ def do_run(n_stars: int,
     channel_out = gravity.particles.new_channel_to(plummer)
 
     t_start = 0
+    patience = 0
     for step in np.arange(t_start, t_end, 1/snapshot_frequency):
         # update the cluster
         model_time = step * 1 | nbody_system.time
@@ -106,10 +107,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
     # EERST op alice aan zetten, dan ondertussen aan het werk. Anders zonde en moet je vet lang wachten op resultaten :)
     
     # TODO: write to scratch and move to data1 once done, or maybe just keep the history and snapshots in memory?
-    # TODO: argparser!!
     # TODO: test multicore speed => seems to work just fine! Not great, but fine! 4 processes did it 3x as fast. 
     # TODO: test if read/write is bottleneck -> fewer snapshots(?)
-    # TODO: right-align the particle indices in the history. Probably makes computer parsing easier...
 
     get_i = lambda: len(os.listdir(main_output_directory))
 
@@ -164,4 +163,4 @@ if __name__ in '__main__':
     # sleep_time = np.random.randint(low=0, high=100)
     # time.sleep(sleep_time/10)
     # print(sleep_time/10)
-    make_buncha_data(n_runs=10, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
+    make_buncha_data(n_runs=1, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
