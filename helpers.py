@@ -2,13 +2,6 @@ import os
 from amuse.lab import Particles, read_set_from_file
 from tqdm import tqdm
 import numpy as np
-import time
-
-
-custom_tqdm = lambda x, total: tqdm(x,ascii =" ▏▎▍▌▋▊▉█", ncols=80, total=total)
-
-# " ▖▘▝▗▚▞█"
-# " ▏▎▍▌▋▊▉█"
 
 
 def running_on_alice() -> bool:
@@ -56,6 +49,15 @@ def read_snapshot_file(run_directory: str):
     all_snapshots = read_set_from_file(f"{run_directory}/snapshots.log", format='amuse', copy_history=False, close_file=False)
     snapshots = np.array([snapshot for snapshot in all_snapshots.history])
     return snapshots
+
+
+if running_on_alice():
+    custom_tqdm = lambda x, total: x
+else:
+    custom_tqdm = lambda x, total: tqdm(x,ascii =" ▏▎▍▌▋▊▉█", ncols=80, total=total)
+
+# " ▖▘▝▗▚▞█"
+# " ▏▎▍▌▋▊▉█"
 
 
 if __name__ == '__main__':
