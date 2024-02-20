@@ -73,10 +73,10 @@ def collapse_binary(binary, hardness_pf: float, for_plot:bool) -> Particle:
     
     # try to put the single stars to the left for easier reading
     if len(str(binary[1].id)) > len(str(binary[0].id)):
-        comparticle.id = f"{hardness:.1f}[ {binary[0].id}, {binary[1].id}]"
+        comparticle.id = f"{hardness:.3f}[ {binary[0].id}, {binary[1].id}]"
 
     else:
-        comparticle.id = f"{hardness:.1f}[ {binary[1].id}, {binary[0].id}]"
+        comparticle.id = f"{hardness:.3f}[ {binary[1].id}, {binary[0].id}]"
 
     return comparticle
 
