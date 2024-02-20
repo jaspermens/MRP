@@ -14,10 +14,16 @@ def get_ke_history(n_bodies, run_number):
     print('snapshots read')
     times = []
     ke_history = []
+    c = 16
     for snapshot in tqdm(all_snapshots.history):
+        if c < 16:
+            c += 1
+            continue
         ke_history.append(get_ke_from_snapshot(snapshot))
         times.append(snapshot.get_timestamp().value_in(nbody_system.time))
-    return np.array(times), np.array(ke_history)
+        c = 0
+
+    return np.array(times), np.array(ke_history) / ke_history[0]
 
 
 def get_ke_from_snapshot(bodies: Particles):
@@ -27,11 +33,23 @@ def get_ke_from_snapshot(bodies: Particles):
 def plot_ke_history(n_bodies: int = 16, run_number: int = 2):
     fig, ax = plt.subplots(1, 1, figsize=[6,4])
     times, ke_hist = get_ke_history(n_bodies=n_bodies, run_number=run_number)
-    ax.plot(times, ke_hist / ke_hist[0], c='black')
+    ax.plot(times, ke_hist, c='black')
     ax.set_xlabel('Time (nbody)')
     ax.set_ylabel(r'$T/T_0$')
     plt.show()
 
+def plot_buncha_ke_history():
+    n_runs = 10
+    fig, (ax16, ax64) = plt.subplots(2, 1, sharex=True)
+    for run_id in range(n_runs):
+        ax16.plot(*get_ke_history(n_bodies=16, run_number=run_id), c='black', alpha=.3)
+        ax64.plot(*get_ke_history(n_bodies=64, run_number=run_id), c='black', alpha=.3)
+
+    ax16.set_title('N=16')
+    ax64.set_title('N=64')
+    ax64.set_xlabel('Time [nbody]')
+
+    plt.show()
 
 def plot_log_ke_history(n_bodies: int = 16, run_number: int = 2):
     fig, ax = plt.subplots(1, 1, figsize=[6,4])
@@ -55,5 +73,5 @@ def get_lombscargle(t, m):
 
 if __name__ == '__main__':
     # plot_log_ke_history(run_number=3)
-    plot_ke_history(run_number=3, n_bodies=64)
+    plot_buncha_ke_history()
 

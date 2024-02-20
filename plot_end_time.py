@@ -14,14 +14,22 @@ def get_end_time_for_run(n_stars: int, run_id: int):
 
 
 def plot_end_histogram():
-    run_ids = range(120)
-    n_stars = 64
-    end_times = []
+    run_ids = range(600)
+    fig, (ax16, ax64) = plt.subplots(2, 1, sharex=True)
+    end_times_16 = []
+    end_times_64 = []
     for run_id in run_ids:
-        end_time = get_end_time_for_run(n_stars=n_stars, run_id=run_id)
-        end_times.append(end_time)
+        end_times_16.append(get_end_time_for_run(n_stars=16, run_id=run_id))
+        end_times_64.append(get_end_time_for_run(n_stars=64, run_id=run_id))
 
-    plt.hist(end_times, bins=20)
+    ax16.hist(end_times_16, bins=np.arange(0, 200, 10))
+    ax64.hist(end_times_64, bins=np.arange(0, 200, 10))
+    ax64.set_xlabel(r'$T_{cc}$')
+
+    ax16.set_title('N=16')
+    ax64.set_title('N=64')
+    fig.suptitle('Histogram of simulation end times')
+    # plt.hist(end_times, bins=20)
     plt.show()
 
 if __name__ == '__main__':
