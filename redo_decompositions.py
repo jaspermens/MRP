@@ -46,7 +46,7 @@ def claim_run(run_id: int, n_stars: int):
 
     os.mknod(claimed_flag) # will raise a FileExistsError if the file already exists
     if os.path.exists(f'{run_directory}/decompositions.txt'):
-        raise FileExistsError
+        raise FileExistsError  # this is just a double check- technically not necessary 
 
 
 def redo_decomp(n_stars: int, start_num: int = 0):
