@@ -51,6 +51,13 @@ def read_snapshot_file(run_directory: str):
     return snapshots
 
 
+def read_history_csv(run_id: int, n_stars: int) -> np.array:
+    run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
+    filename = f'{run_directory}/decompositions.txt'
+    times, ke_history, hardest_hardness, decomp = np.genfromtxt(filename, dtype=str, delimiter=' - ', skip_header=1, unpack=True)
+    return times.astype(float), ke_history.astype(float), hardest_hardness.astype(float), decomp
+
+
 if running_on_alice():
     custom_tqdm = lambda x, total: x
 else:
