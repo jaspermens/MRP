@@ -71,4 +71,4 @@ def redo_decomp(n_stars: int, start_num: int = 0):
 
 
 if __name__ == '__main__':
-    redo_decomp(n_stars=16)
+    redo_decomp(n_stars=16, start_num=599)
