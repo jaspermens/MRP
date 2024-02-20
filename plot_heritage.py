@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from helpers import custom_tqdm, get_run_directory
+from helpers import custom_tqdm, get_run_directory, read_history_csv
 from heritage_from_history import compile_heritage
 from itertools import groupby
 import scipy
@@ -102,28 +102,38 @@ def hist_encounter_duration():
     plt.show()
 
 
+def get_hbh_for_run(run_id: int, n_stars: int) -> tuple[np.array, np.array]:
+    times, _, hardnesses, *_ = read_history_csv(run_id=run_id, n_stars=n_stars)
+    return times, hardnesses
+
 
 def plot_buncha_hardnesses_over_time():
     def plot_history_on_ax(ax, run_id, n_stars):
-        times, hardnesses, _ = compile_heritage(run_id=run_id, n_stars=n_stars)
-        if hardnesses[0] < 10:
+        # times, hardnesses, _ = compile_heritage(run_id=run_id, n_stars=n_stars)
+        times, hardnesses = get_hbh_for_run(run_id=run_id, n_stars=n_stars)
+
+        if len(hardnesses) == 0 or hardnesses[-1] < 10:
             print(f"DNF: N{n_stars} run {run_id}")
             return
-        times = np.array(times) - times[0]
+        
+        times = times - times[-1]
         # hardnesses_smoothed = scipy.ndimage.maximum_filter1d(hardnesses, size=50)
         # mask = ((hardnesses < 10) & (hardnesses > 0))
         mask = hardnesses > 0
+        dh = np.abs(np.diff(hardnesses))
         ax.plot(times[mask], hardnesses[mask],
+        # ax.scatter(times[:-1][dh>0], dh[dh>0],
                      lw=1, 
                      c='black', 
                      alpha=.1,
+                    #  s=.1,
                 )
         
-    run_ids = range(600)
+    run_ids = range(580,600)
     fig, (ax16, ax64) = plt.subplots(2,1, figsize=[8, 15], sharex=True, sharey=True, layout='constrained')
     for rnid in custom_tqdm(run_ids, total=len(run_ids)):    
         plot_history_on_ax(ax=ax16, n_stars=16, run_id=rnid)
-        plot_history_on_ax(ax=ax64, n_stars=64, run_id=rnid)
+        # plot_history_on_ax(ax=ax64, n_stars=64, run_id=rnid)
 
     fig.suptitle('Hardness over time for the final hard binary\n(and its direct predecessor binaries)')
     ax64.set_ylabel('Hardness [$kT_0$]')
