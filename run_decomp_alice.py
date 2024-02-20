@@ -124,6 +124,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
         try:
             os.mkdir(output_directory)
         except FileExistsError:
+            # if the file already exists, then try another one. 
+            # things get kind of messy when you're running 12 runs in parallel
             return claim_directory()
         
         return output_directory, i
