@@ -74,12 +74,13 @@ def get_theseus_binary_from_decomp(target_binary: list, decomp: str):
 
     member_containing_hardnesses = []
     member_containing_binaries = []
-    for star in target_binary:
-        for bi, binary in enumerate(binaries):
-            if star not in binary:
-                continue
-            member_containing_hardnesses.append(hardnesses[bi])
-            member_containing_binaries.append(binaries[bi])
+    target_primary, target_secondary = target_binary
+    
+    for hardness, binary in zip(hardnesses, binaries):
+        if (target_primary not in binary) and (target_secondary not in binary):
+            continue
+        member_containing_hardnesses.append(hardness)
+        member_containing_binaries.append(binary)
 
     if len(member_containing_binaries) == 0:
         return 0, target_binary
@@ -87,6 +88,7 @@ def get_theseus_binary_from_decomp(target_binary: list, decomp: str):
     hardest_id = np.argmax(member_containing_hardnesses)
     hardest_member_hardness = member_containing_hardnesses[hardest_id]
     hardest_member_binary = member_containing_binaries[hardest_id]
+
     return hardest_member_hardness, hardest_member_binary
 
 
