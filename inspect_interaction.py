@@ -8,16 +8,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from amuse.plot import scatter
 from decompose_multiples import find_composite_multiples
-
+from helpers import get_run_directory, snapshot_at_time, read_snapshot_file
 
 N_STARS = 16
-SNAPSHOT_DIRECTORY = f'output/n{N_STARS}/snapshots'
+RUN_NUMBER = 0
+SNAPSHOT_DIRECTORY = get_run_directory(n_stars=N_STARS, run_id=RUN_NUMBER)
 
-def snapshot_at_time(time: float) -> Particles:
-    filename = f'{SNAPSHOT_DIRECTORY}/snapshot_time{float(time):.2f}'
-    return read_set_from_file(filename=filename, format='csv')
-
-initial_plummer = snapshot_at_time(0.00)
+SNAPSHOTS = read_snapshot_file(run_directory=SNAPSHOT_DIRECTORY)
+initial_plummer = SNAPSHOTS[0]
 INITIAL_KE = initial_plummer.kinetic_energy()
 
 
@@ -57,36 +55,6 @@ def pos_all(plummer):
             plummer.z.value_in(nbody_system.length))
 
 
-# def pos_members(plummer):
-#     multiples = find_composite_multiples(plummer=plummer.copy(), min_hardness_kt=1, initial_ke=INITIAL_KE, for_plot=True)
-#     members = []
-#     hardnesses = []
-#     ids = []
-#     nstars = len(plummer)
-#     for multiple, hardness in multiples:
-#         for id in multiple:
-#             if id > nstars:
-#                 continue
-#             ids.append(int(id))
-#             members.append(plummer[int(id)])
-#             hardnesses.append(hardness)
-
-#     posx = [m.x.value_in(nbody_system.length) for m in members]
-#     posy = [m.y.value_in(nbody_system.length) for m in members]
-#     posz = [m.z.value_in(nbody_system.length) for m in members]
-
-#     return posx, posy, posz, hardnesses, ids
-
-# def test_plummer():
-#     plummer = Particles(16)
-#     for i, star in enumerate(plummer):
-#         star.x = i/4 | nbody_system.length
-#         star.y = i/4 | nbody_system.length
-#         star.z = 1 | nbody_system.length
-#         star.id = i
-
-#     return plummer
-
 def plot(param):
     global fig, ax1, ax2, window, canvas
     
@@ -95,7 +63,7 @@ def plot(param):
     time = plot_time_slider.get()
     viewsize = get_view_size()
         
-    plummer = snapshot_at_time(time)
+    plummer = snapshot_at_time(snapshots=SNAPSHOTS, time=time)
     # plummer = test_plummer()
 
     def get_focus_star_pos():

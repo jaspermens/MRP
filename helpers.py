@@ -1,6 +1,9 @@
 import os
 from amuse.lab import Particles, read_set_from_file
 from tqdm import tqdm
+import numpy as np
+import time
+
 
 custom_tqdm = lambda x, total: tqdm(x,ascii =" ▏▎▍▌▋▊▉█", ncols=80, total=total)
 
@@ -41,7 +44,20 @@ def check_clean_directory(path: str):
     os.mkdir(path)
 
 
-def snapshot_at_time(snapshot_directory: str, time: float) -> Particles:
+def snapshot_at_time_depr(snapshot_directory: str, time: float) -> Particles:
     filename = f'{snapshot_directory}/snapshot_time{float(time):.2f}'
     return read_set_from_file(filename=filename, format='csv')
 
+def snapshot_at_time(snapshots, time: float, snapshot_frequency: int = 128) -> Particles:
+    target = snapshots[int(time*snapshot_frequency)]
+    return target
+
+def read_snapshot_file(run_directory: str):
+    all_snapshots = read_set_from_file(f"{run_directory}/snapshots.log", format='amuse', copy_history=False, close_file=False)
+    snapshots = np.array([snapshot for snapshot in all_snapshots.history])
+    return snapshots
+
+
+if __name__ == '__main__':
+    rundir = get_run_directory(n_stars=16, run_id=1)
+    snaps = read_snapshot_file(run_directory=rundir)

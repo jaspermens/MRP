@@ -8,15 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from decompose_multiples import replace_a_binary
 from helpers import stitch_movie, check_clean_directory, custom_tqdm
-
-RUN_DIRECTORY = 'output/n16'
-SNAPSHOT_DIRECTORY = RUN_DIRECTORY + '/snapshots'
+from helpers import get_run_directory, read_snapshot_file, snapshot_at_time
 
 
-def snapshot_at_time(time: float) -> Particles:
-    filename = f'{SNAPSHOT_DIRECTORY}/snapshot_time{time:.2f}'
-    return read_set_from_file(filename=filename, format='csv')
-
+N_STARS = 16
+RUN_NUMBER = 42
+RUN_DIRECTORY = get_run_directory(n_stars=N_STARS, run_id=RUN_NUMBER)
+SNAPSHOTS = read_snapshot_file(run_directory=RUN_DIRECTORY)
 
 def get_binaries_to_plot(plummer, initial_ke, min_hardness_kt=1):
     """
@@ -63,7 +61,7 @@ def pos_members(plummer, initial_ke):
 
 
 def plot_at_time(time: float, ax, initial_ke, focus_star_id=None, focus_size=None):
-    plummer = snapshot_at_time(time)
+    plummer = snapshot_at_time(time=time, snapshots=SNAPSHOTS)
 
     all_x, all_y, all_z = pos_all(plummer)
     ax.scatter(all_x, all_y, all_z, c='grey')
@@ -80,23 +78,25 @@ def plot_at_time(time: float, ax, initial_ke, focus_star_id=None, focus_size=Non
         
     ax.set_aspect('equal')
     plot_title = f'Time {float(time):.2f}'
-    if not focus_star_id:
+    if focus_star_id is None:
         img_center_x, img_center_y, img_center_z = 0, 0, 0
-        plot_title += f' focus: star {focus_star_id}'
+        plot_title += f' focus: CoM'
     else:
-        focus_star = plummer[plummer.id == focus_star_id]
+        focus_star = plummer[plummer.id == f"{focus_star_id:>02}"]
         img_center_x = focus_star.x.value_in(nbody_system.length)
         img_center_y = focus_star.y.value_in(nbody_system.length)
         img_center_z = focus_star.z.value_in(nbody_system.length)
+        plot_title += f' focus: star {focus_star_id}'
 
     if not focus_size:
         maxdist = np.percentile(np.abs(np.concatenate([all_x, all_y, all_z])), q=90)
     else:
         maxdist = focus_size
 
-    ax.set_xlim(img_center_x-maxdist, img_center_x + maxdist)
-    ax.set_ylim(img_center_y-maxdist, img_center_y + maxdist)
-    ax.set_zlim(img_center_z-maxdist, img_center_z + maxdist)
+    ax.set_xlim(img_center_x - maxdist, img_center_x + maxdist)
+    ax.set_ylim(img_center_y - maxdist, img_center_y + maxdist)
+    ax.set_zlim(img_center_z - maxdist, img_center_z + maxdist)
+    ax.set_aspect('equal')
 
     ax.set_title(plot_title)
 
@@ -107,7 +107,7 @@ def make_buncha_plots(img_directory: str, from_time: float,
     fig = plt.figure(figsize=[10,10], dpi=100)
     ax = fig.add_subplot(projection='3d')
 
-    initial_plummer = snapshot_at_time(0.00)
+    initial_plummer = SNAPSHOTS[0]
     initial_ke = initial_plummer.kinetic_energy()
 
     for i, t in custom_tqdm(enumerate(np.arange(from_time, to_time, cadence)),
@@ -139,11 +139,11 @@ def make_movie(from_time=0,
 
 
 if __name__ == '__main__':
-    focus_id = 12
-    t_start = 98
-    t_end = 102
-    cadence = .01
-    movie_fn = f'star{focus_id}_{t_start}to{t_end}'
+    focus_id = None
+    t_start = 0
+    t_end = 30
+    cadence = 1/16
+    movie_fn = f'star{focus_id if focus_id else 'COM'}_{t_start}to{t_end}'
 
     make_movie(from_time=t_start, 
                to_time=t_end, 
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                delete_images=True, 
                movie_filename=movie_fn, 
                focus_star_id = focus_id, 
-               focus_size=.5,
+               focus_size=5,
                )
 
     

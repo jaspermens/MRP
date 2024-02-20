@@ -85,9 +85,15 @@ def get_innermost_hardness(decomp: str) -> float:
 def get_max_hardness_in_decomp_list(decomp_list: list) -> float:
     if len(decomp_list) == 0:
         return 0.
-    binding_energies = [get_innermost_hardness(decomp=decomp) for decomp in decomp_list]
+
+    binding_energies = [get_innermost_hardness(decomp=binary_slice) for full_decomp in decomp_list for binary_slice in full_decomp.split("],")]
     return np.max(binding_energies)
 
+
+def test_get_max_h_in_decomp_list():
+    decomp_list = ['22.8[ 31, 50]', '4.0[ 29, 3.0[ 48, 5.9[ 04, 4.4[ 24, 15]]]]']
+    decomp_list = ['1.5[ 19, 1.2[ 22.8[ 31, 50], 9.2[ 48, 3.3[ 04, 4.0[ 29, 3.3[ 24, 15]]]]]]']
+    print(get_max_hardness_in_decomp_list(decomp_list=decomp_list))
 
 def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_hardness_kt: float) -> None:
     main_output_directory = f'output/n{n_stars}'
@@ -160,7 +166,8 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
 
 if __name__ in '__main__':
     # import time
+    test_get_max_h_in_decomp_list()
     # sleep_time = np.random.randint(low=0, high=100)
     # time.sleep(sleep_time/10)
     # print(sleep_time/10)
-    make_buncha_data(n_runs=1, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)
+    # make_buncha_data(n_runs=1, n_stars=16, snapshot_frequency=128, min_hardness_kt=1)

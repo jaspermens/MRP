@@ -38,7 +38,7 @@ def extract_binary_info_from_slice(decomp_slice: str) -> tuple:
 
 
 def extract_binaries_from_decomp(decomp: str):
-    binary_slices = decomp.split('],')
+    binary_slices = [b for binary in decomp.split("', '") for b in binary.split('],')]
 
     hardnesses = np.zeros_like(binary_slices, dtype=object)
     components = np.zeros_like(binary_slices, dtype=object)
@@ -46,7 +46,7 @@ def extract_binaries_from_decomp(decomp: str):
     for i, binary_slice in enumerate(binary_slices):
         hardnesses[i], components[i] = extract_binary_info_from_slice(binary_slice)
 
-    return hardnesses, components
+    return hardnesses.astype(float), components
 
 
 def get_hardest_binary_from_decomp(decomp: str):
@@ -57,6 +57,12 @@ def get_hardest_binary_from_decomp(decomp: str):
     hardest_hardness = hardnesses[hardest_binary_index]
 
     return hardest_hardness, hardest_binary
+
+
+def test_hardest_binary_from_decomp():
+    decomp1 = "['1.9[ 03, 1.8[ 01, 3.3[ 11, 3.5[ 14, 6.9[ 00, 4.6[ 08, 10.5[ 12, 8.2[ 13, 12.3[ 10, 2.2[ 12.7[ 05, 15], 1.0[ 04, 3.8[ 06, 1.4[ 02, 4.7[ 07, 09]]]]]]]]]]]]]]']"
+    decomp2 = "['1.0[ 11, 1.2[ 3.3[ 00, 03], 1.5[ 09, 1.0[ 13, 5.1[ 05, 8.2[ 06, 3.6[ 07, 1.3[ 01, 12]]]]]]]]']"
+    print(get_hardest_binary_from_decomp(decomp=decomp2))
 
 
 def get_theseus_binary_from_decomp(target_binary: list, decomp: str):
@@ -90,7 +96,11 @@ def compile_heritage(n_stars: int = 16, run_id: int = 0):
 
     final_time, decomp = time_decomp_from_line(history_backwards[0])
     final_hardness, final_components = get_hardest_binary_from_decomp(decomp)
-    
+    # maybe this should be: 
+    # if None in final_components:
+    # this current version also cuts out the DNF's
+    if final_hardness < 10:
+        return [], np.array([], dtype=float), []
     hardnesses = [final_hardness]
     times = [final_time]
     binaries = [final_components]
@@ -111,10 +121,14 @@ def compile_heritage(n_stars: int = 16, run_id: int = 0):
         hardnesses.append(hardness)
         binaries.append(binary)
 
+
+
     return times, np.array(hardnesses).astype('float'), binaries
 
 
 
 if __name__ in '__main__':
-    print(compile_heritage(run_id=0))
+    # print(compile_heritage(run_id=3))
+
+    test_hardest_binary_from_decomp()
     # test_decomp_str_from_line(time=6.10)
