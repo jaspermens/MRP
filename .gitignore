@@ -21,3 +21,7 @@ plots/temperatures_n16_run2.png
 plots/temperatures_n16_run3.png
 __pycache__/decompose_multiples.cpython-310.pyc
 __pycache__/helpers.cpython-310.pyc
+plots/cc_time_cdf.png
+plots/end_times_600.png
+plots/family_size_1000.png
+plots/interaction_energies_500.png
