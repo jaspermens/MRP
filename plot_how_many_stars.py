@@ -3,6 +3,7 @@ import numpy as np
 
 from helpers import custom_tqdm, get_run_directory
 from heritage_from_history import compile_heritage
+from plotconfig import *
 
 
 def count_stars_in_heritage(heritage: np.array):
@@ -59,5 +60,4 @@ def hist_family_size(n_runs: int = 10):
 
 
 if __name__ == "__main__":
-    plt.style.use('~/Templates/not_ugly.mplstyle')
-    hist_family_size(n_runs = 600)
+    hist_family_size(n_runs = 1000)
