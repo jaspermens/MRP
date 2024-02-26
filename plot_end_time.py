@@ -1,37 +1,61 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from helpers import get_run_directory
+from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars
+from plotconfig import *
 
 
 def get_end_time_for_run(n_stars: int, run_id: int):
-    directory = get_run_directory(n_stars=n_stars, run_id=run_id)
-    history_fn = f'{directory}/history.txt'
-    with open(history_fn, 'r') as file:
-        end_time = file.read().split('\n')[-1]
-        print(end_time)
-        return float(end_time)
+    times, *_ = read_history_csv(n_stars=n_stars, run_id=run_id)
+    return times[-1]
 
 
-def plot_end_histogram():
-    run_ids = range(600)
-    fig, (ax16, ax64) = plt.subplots(2, 1, sharex=True)
-    end_times_16 = []
-    end_times_64 = []
-    for run_id in run_ids:
-        end_times_16.append(get_end_time_for_run(n_stars=16, run_id=run_id))
-        end_times_64.append(get_end_time_for_run(n_stars=64, run_id=run_id))
+def get_end_times_for_n_stars(n_stars: int):
+    npz_filename = f'output/end_times_n{n_stars}.npy'
+    try:
+        end_times = np.load(file=npz_filename)
+        print(f'File found! re-using the {len(end_times)} end times from {npz_filename}...')
+        return end_times
+    
+    except FileNotFoundError:
+        print(f'File {npz_filename} not found- redoing')
+        pass
 
-    ax16.hist(end_times_16, bins=np.arange(0, 200, 10))
-    ax64.hist(end_times_64, bins=np.arange(0, 200, 10))
-    ax64.set_xlabel(r'$T_{cc}$')
+    run_ids = get_run_ids_for_n_stars(n_stars=n_stars)
+    
+    end_times = np.zeros_like(run_ids, dtype=float)
+    for i,run_id in custom_tqdm(enumerate(run_ids), total=len(run_ids)):
+        end_times[i] = get_end_time_for_run(n_stars=n_stars, run_id=run_id)
 
-    ax16.set_title('N=16')
-    ax64.set_title('N=64')
-    fig.suptitle('Histogram of simulation end times')
-    # plt.hist(end_times, bins=20)
+    np.save(file=npz_filename, arr=end_times)
+    return end_times
+
+
+def plot_end_time_cdfs(n_stars: int | list[int]):
+    def color_for_n(n_stars: int):
+        match n_stars:
+            case 16: return 'red'
+            case 14: return 'firebrick'
+            case 12: return 'maroon'
+            case 64: return 'blue'
+            case 72: return 'darkblue'
+            case 80: return 'navy'
+    if isinstance(n_stars, int):
+        n_stars = [n_stars]
+
+    fig, ax = plt.subplots(1,1, figsize=[5,5])
+
+    for n in n_stars:
+        t_end = get_end_times_for_n_stars(n_stars=n)
+        ax.ecdf(t_end, label=f'N={n}', c=color_for_n(n_stars=n))
+
+    ax.legend()
+    ax.set_title('CDF of core collapse time')
+    ax.set_ylim(0, 1.05)
+    ax.set_xlim(0, 201)
+    ax.set_xlabel('Time of binary formation')
+
     plt.show()
 
 if __name__ == '__main__':
-    # get_end_time_for_run(n_stars=16, run_id=0)
-    plot_end_histogram()
+    plot_end_time_cdfs(n_stars=np.sort([16, 64, 12, 14, 72, 80]))

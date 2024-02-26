@@ -1,8 +1,8 @@
 import numpy as np
-from helpers import get_run_directory
+from helpers import get_run_directory, read_history_csv
 
 
-def read_history(n_stars: int = 16, run_id: int = 0):
+def read_history_deprecated(n_stars: int = 16, run_id: int = 0):
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
     history_fn = f'{run_directory}/history.txt'
 
@@ -13,7 +13,7 @@ def read_history(n_stars: int = 16, run_id: int = 0):
     return history
 
 
-def time_decomp_from_line(line: str):
+def time_decomp_from_line_deprecated(line: str):
     time, decomp = line.split(' - ')
     decomp_raw = decomp.split(':')[1]
     time = float(time.split(':')[1])
@@ -94,43 +94,42 @@ def get_theseus_binary_from_decomp(target_binary: list, decomp: str):
 
 def compile_heritage(n_stars: int = 16, run_id: int = 0):
     """Returns time and data arrays for the hardness history of the final hard binary"""
-    history_backwards = read_history(n_stars=n_stars, run_id=run_id)[::-1]
+    times, *_, decomps = read_history_csv(n_stars=n_stars, run_id=run_id)
+    times_reversed = times[::-1]
+    decomps_reversed = decomps[::-1]
+    final_time, final_decomp = times_reversed[0], decomps_reversed[0]
+    assert final_time > 0
 
-    final_time, decomp = time_decomp_from_line(history_backwards[0])
-    final_hardness, final_components = get_hardest_binary_from_decomp(decomp)
+    final_hardness, final_components = get_hardest_binary_from_decomp(final_decomp)
     # maybe this should be: 
     # if None in final_components:
     # this current version also cuts out the DNF's
     if final_hardness < 10:
         return [], np.array([], dtype=float), []
-    hardnesses = [final_hardness]
-    times = [final_time]
-    binaries = [final_components]
+    history_hardnesses = [final_hardness]
+    history_times = [final_time]
+    history_binaries = [final_components]
 
     binary = final_components
     patience = 0
-    for line in history_backwards[1:]:
+    for time, decomp in zip(times_reversed, decomps_reversed):
         if patience == 10:
             break
-        time, decomp = time_decomp_from_line(line)
-
-        times.append(time)
+        history_times.append(time)
         hardness, binary = get_theseus_binary_from_decomp(binary, decomp)
         
         if hardness == 0:
             patience += 1
         
-        hardnesses.append(hardness)
-        binaries.append(binary)
+        history_hardnesses.append(hardness)
+        history_binaries.append(binary)
 
-
-
-    return times, np.array(hardnesses).astype('float'), binaries
+    return history_times, np.array(history_hardnesses).astype('float'), history_binaries
 
 
 
 if __name__ in '__main__':
-    # print(compile_heritage(run_id=3))
+    print(compile_heritage(n_stars=16, run_id=1))
 
-    test_hardest_binary_from_decomp()
+    # test_hardest_binary_from_decomp()
     # test_decomp_str_from_line(time=6.10)
