@@ -1,7 +1,7 @@
 import numpy as np
 
 from amuse.lab import Particles
-from helpers import get_final_snapshot, read_history_csv, get_run_ids_for_n_stars, custom_tqdm
+from helpers import get_final_snapshot, read_history_csv, get_run_ids_for_n_stars, custom_tqdm, get_output_path
 from heritage_from_history import get_hardest_binary_from_decomp
 from amuse.lab import nbody_system
 from amuse.ext.orbital_elements import orbital_elements_from_binary
@@ -37,7 +37,8 @@ def get_final_bindist_ecc_for_run(n_stars: int, run_id: int) -> float:
 
 
 def get_final_binary_properties_for_n_stars(n_stars: int):
-    npz_filename = f'output/n{n_stars}_finalbinary_properties.npy'
+    output_path = get_output_path()
+    npz_filename = f'{output_path}/n{n_stars}_finalbinary_properties.npy'
     try:
         binary_props = np.load(file=npz_filename)
         print(f'File found! re-using the {len(binary_props)} binary properties from {npz_filename}...')

@@ -2,11 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from amuse.lab import nbody_system
 
-from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars, snapshot_at_time, read_snapshot_file, get_run_directory
+from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars, snapshot_at_time, read_snapshot_file, get_run_directory, get_output_path
 from plotconfig import *
 
 def get_core_radius_history_for_run(n_stars: int, run_id: int):
-    filename = f'output/n{n_stars}/run_{run_id:>04}/core_radius_n{n_stars}_run{run_id}.npy'
+    output_path = get_output_path()
+    filename = f'{output_path}/n{n_stars}/run_{run_id:>04}/core_radius_n{n_stars}_run{run_id}.npy'
     try:
         time, core_radius = np.load(file=filename)
         return time, core_radius

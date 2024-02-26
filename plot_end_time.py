@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars
+from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars, get_output_path
 from plotconfig import *
 
 
@@ -11,7 +11,7 @@ def get_end_time_for_run(n_stars: int, run_id: int):
 
 
 def get_end_times_for_n_stars(n_stars: int):
-    npz_filename = f'output/end_times_n{n_stars}.npy'
+    npz_filename = f'{get_output_path()}/end_times_n{n_stars}.npy'
     try:
         end_times = np.load(file=npz_filename)
         print(f'File found! re-using the {len(end_times)} end times from {npz_filename}...')
