@@ -6,8 +6,8 @@ from helpers import read_history_csv, custom_tqdm, get_run_ids_for_n_stars, snap
 from plotconfig import *
 
 def get_core_radius_history_for_run(n_stars: int, run_id: int):
-    output_path = get_output_path()
-    filename = f'{output_path}/n{n_stars}/run_{run_id:>04}/core_radius_n{n_stars}_run{run_id}.npy'
+    rundir = get_run_directory()
+    filename = f'{rundir}/core_radius_n{n_stars}_run{run_id}.npy'
     try:
         time, core_radius = np.load(file=filename)
         return time, core_radius
