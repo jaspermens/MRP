@@ -25,3 +25,7 @@ plots/cc_time_cdf.png
 plots/end_times_600.png
 plots/family_size_1000.png
 plots/interaction_energies_500.png
+__pycache__/decompose_multiples.cpython-310.pyc
+__pycache__/helpers.cpython-310.pyc
+__pycache__/plotconfig.cpython-312.pyc
+__pycache__/postprocess_fb_properties.cpython-312.pyc
