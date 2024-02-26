@@ -41,21 +41,38 @@ def snapshot_at_time_depr(snapshot_directory: str, time: float) -> Particles:
     filename = f'{snapshot_directory}/snapshot_time{float(time):.2f}'
     return read_set_from_file(filename=filename, format='csv')
 
+
 def snapshot_at_time(snapshots, time: float, snapshot_frequency: int = 128) -> Particles:
-    target = snapshots[int(time*snapshot_frequency)]
+    target = snapshots[round(time*snapshot_frequency)]
     return target
+
 
 def read_snapshot_file(run_directory: str):
     all_snapshots = read_set_from_file(f"{run_directory}/snapshots.log", format='amuse', copy_history=False, close_file=False)
     snapshots = np.array([snapshot for snapshot in all_snapshots.history])
     return snapshots
 
+def get_final_snapshot(run_id: int, n_stars: int) -> Particles: 
+    run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
+    all_snapshots = read_set_from_file(f"{run_directory}/snapshots.log", format='amuse', copy_history=False, close_file=True)
+    return all_snapshots
 
 def read_history_csv(run_id: int, n_stars: int) -> np.array:
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
     filename = f'{run_directory}/decompositions.txt'
     times, ke_history, hardest_hardness, decomp = np.genfromtxt(filename, dtype=str, delimiter=' - ', skip_header=1, unpack=True)
     return times.astype(float), ke_history.astype(float), hardest_hardness.astype(float), decomp
+
+
+def get_run_ids_for_n_stars(n_stars: int):
+    if n_stars in [16, 64]:
+        run_ids = range(1000)
+    elif n_stars in [72, 80, 12, 14]:
+        run_ids = range(500)
+    else:
+        raise NotImplementedError
+    
+    return run_ids
 
 
 if running_on_alice():
@@ -67,6 +84,23 @@ else:
 # " ▏▎▍▌▋▊▉█"
 
 
+
+def test_final_snapshot_speed():
+    run_id = 1
+    n_stars = 16
+    snapshot = read_snapshot_file(run_directory=get_run_directory(n_stars=n_stars, run_id=run_id))[-1]
+    final_time = snapshot.get_timestamp()
+
+    for _ in custom_tqdm(range(1), total=10):
+        snapshot = get_final_snapshot(run_id=run_id, n_stars=n_stars)
+        assert snapshot.get_timestamp() == final_time
+
+    for _ in custom_tqdm(range(1), total=10):
+        snapshot = read_snapshot_file(run_directory=get_run_directory(n_stars=n_stars, run_id=run_id))[-1]
+        assert snapshot.get_timestamp() == final_time
+
+
 if __name__ == '__main__':
-    rundir = get_run_directory(n_stars=16, run_id=1)
-    snaps = read_snapshot_file(run_directory=rundir)
+    test_final_snapshot_speed()
+    # rundir = get_run_directory(n_stars=16, run_id=1)
+    # snaps = read_snapshot_file(run_directory=rundir)
