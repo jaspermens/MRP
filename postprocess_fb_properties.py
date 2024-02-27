@@ -61,6 +61,7 @@ def get_final_binary_properties_for_n_stars(n_stars: int):
     
     binary_props = np.zeros((len(run_ids), 2), dtype=float)
     for i, run_id in custom_tqdm(enumerate(run_ids), total=len(run_ids)):
+        print(run_id)
         distance, ecc = get_final_bindist_ecc_for_run(n_stars=n_stars, run_id=run_id) 
         binary_props[i] = np.array([distance, ecc])
 
