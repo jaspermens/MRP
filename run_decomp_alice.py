@@ -7,9 +7,17 @@ import numpy as np
 import os
 
 from decompose_multiples import find_composite_multiples
-from helpers import running_on_alice
+from helpers import running_on_alice, get_final_snapshot_filename
 
 
+def is_hb_hard_enough(plummer, target_hardness_kt0, initial_ke) -> bool:
+    # just see if there's binaries with >10kT_0 hardness:
+    hardness_prefactor = initial_ke / plummer.kinetic_energy()
+    min_hardness_kt_adjusted = hardness_prefactor * 2/3 * target_hardness_kt0
+    binaries = plummer.get_binaries(G=nbody_system.G, hardness=min_hardness_kt_adjusted)
+    return len(binaries) > 0
+
+    
 def do_run(n_stars: int, 
            snapshot_frequency: float, 
            output_directory: str, 
@@ -29,13 +37,8 @@ def do_run(n_stars: int,
     plummer.id = [f'{i:>02}' for i in range(n_stars)]
 
     snapshot_filename = f'{output_directory}/snapshots.log' # just one file because fuck it
-    history_filename = f'{output_directory}/history.txt'
-
-    outfile = open(history_filename, 'a+')
-    # outfile.write(f"="*20 + f" N={n_stars} - {min_hardness_kt}kT" + "="*20 + "\n")
-    doc = f" N={n_stars} - {min_hardness_kt}kT "
-    outfile.write(f"{doc:=^80}\n")
-
+    final_snapshot_filename = get_final_snapshot_filename(n_stars=n_stars, run_id=rng_seed) # rng_seed is the run_id. Knew that would come in handy!
+    
     initial_ke = plummer.kinetic_energy()
     gravity.particles.add_particles(plummer)
     channel_out = gravity.particles.new_channel_to(plummer)
@@ -51,49 +54,24 @@ def do_run(n_stars: int,
         # save snapshot
         write_set_to_file(plummer.savepoint(model_time), snapshot_filename, "amuse", append_to_file=True)
         
-        # decompose and filter out single stars
-        ids = find_composite_multiples(plummer.copy(), min_hardness_kt=min_hardness_kt, initial_ke=initial_ke)        
-        justmultiples = [id for id in ids if len(id) > 5]
-
-        max_inner_hardness = get_max_hardness_in_decomp_list(justmultiples)
-        outfile.write(f'\ntime: {step:.3f} - decomposition: {justmultiples}')
-        
-        if max_inner_hardness < 10:
+        # see if we're done
+        hb_hard_enough = is_hb_hard_enough(plummer=plummer, 
+                                           target_hardness_kt0=10, 
+                                           initial_ke=initial_ke
+                                           )
+    
+        if hb_hard_enough:
+            patience += 1
+        else:
             patience = 0
-            continue
             
         if patience > stop_delay:
             break
-            
-        patience += 1
 
-    outfile.write(f'\nEnd time:\n{model_time.value_in(nbody_system.time):.2f}')
+    write_set_to_file(plummer.savepoint(model_time), final_snapshot_filename, "amuse")
+
     gravity.stop()
-    outfile.close() 
 
-
-def get_innermost_hardness(decomp: str) -> float:
-    decomp_cleaned = decomp\
-        .replace('[', '')\
-        .replace(']', '')\
-        .replace(',', '')
-    decomp_array = np.array(decomp_cleaned.split())
-
-    hardnesses = decomp_array[np.where(['.' in d for d in decomp_array])].astype(float)
-    return hardnesses[-1]
-
-def get_max_hardness_in_decomp_list(decomp_list: list) -> float:
-    if len(decomp_list) == 0:
-        return 0.
-
-    binding_energies = [get_innermost_hardness(decomp=binary_slice) for full_decomp in decomp_list for binary_slice in full_decomp.split("],")]
-    return np.max(binding_energies)
-
-
-def test_get_max_h_in_decomp_list():
-    decomp_list = ['22.8[ 31, 50]', '4.0[ 29, 3.0[ 48, 5.9[ 04, 4.4[ 24, 15]]]]']
-    decomp_list = ['1.5[ 19, 1.2[ 22.8[ 31, 50], 9.2[ 48, 3.3[ 04, 4.0[ 29, 3.3[ 24, 15]]]]]]']
-    print(get_max_hardness_in_decomp_list(decomp_list=decomp_list))
 
 def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_hardness_kt: float) -> None:
     main_output_directory = f'output/n{n_stars}'
@@ -107,14 +85,9 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
         print(os.getcwd())
         raise FileNotFoundError(f"Output directory {main_output_directory} not found")
 
-    # TODO: prototype plots -> make sure we can parse the stuff efficiently
     # TODO: prototype binary hardness history -> traverse history backwards and keep track of hardness of... hardest binary?
-    # TODO: snapshot cadence naar 2^-3 (of maybe of 2^-4)?? idk. Allebei prima, data is goedkoop I guess. Variabele!
-    # EERST op alice aan zetten, dan ondertussen aan het werk. Anders zonde en moet je vet lang wachten op resultaten :)
     
-    # TODO: write to scratch and move to data1 once done, or maybe just keep the history and snapshots in memory?
-    # TODO: test multicore speed => seems to work just fine! Not great, but fine! 4 processes did it 3x as fast. 
-    # TODO: test if read/write is bottleneck -> fewer snapshots(?)
+    # TODO: refactor this so either everything happens in pp, or the updated decomp stuff happens here. No use doing the decomps if I'm just going to redo them
 
     get_i = lambda: len(os.listdir(main_output_directory))
 
@@ -141,34 +114,11 @@ def make_buncha_data(n_runs: int, n_stars: int, snapshot_frequency: int, min_har
                )
 
 
-# def test_diff_step_sizes():
-#     snapshot_freqs = [2**3, 10, 2**6, 100, 2**7]
-#     n_bodies = 16
-#     output_dir = 'output/test'
-#     min_hardness_kt = 3
-#     rng_seed = 123
-#     t_ccs = np.zeros(5)
-#     for seed in range(10):
-#         for i, sf in enumerate(snapshot_freqs):
-#             t_cc = do_run(n_stars=n_bodies, snapshot_frequency=sf, output_directory=output_dir, min_hardness_kt=min_hardness_kt, rng_seed=seed)
-#             print(f'frequency {sf} - t_cc {t_cc}')
-#             t_ccs[i] += t_cc
-
-#     print(f'averages: {t_ccs/10}')
-
-# def test_read_snapshot():
-#     from amuse.lab import read_set_from_file
-#     snapshot_file = 'output/test/snapshots.log'
-#     snapshots = read_set_from_file(snapshot_file, 'amuse')
-#     snapshots_list = [s for s in snapshots.history]
-#     snapshot = snapshots_list[-1]
-#     ids = find_composite_multiples(snapshot.copy(), initial_ke=snapshots_list[0].kinetic_energy(), min_hardness_kt=1)
-#     print(ids)
-
 
 if __name__ in '__main__':
+    ...
     # import time
-    test_get_max_h_in_decomp_list()
+    # test_get_max_h_in_decomp_list()
     # sleep_time = np.random.randint(low=0, high=100)
     # time.sleep(sleep_time/10)
     # print(sleep_time/10)

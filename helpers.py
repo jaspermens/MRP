@@ -9,11 +9,8 @@ def running_on_alice() -> bool:
 
 
 def get_run_directory(n_stars: int, run_id: int) -> str:
-    end = f'output/n{n_stars}/run_{run_id:>04}'
-    if running_on_alice():
-        return f'/home/s2015242/data1/{end}'
-    else:
-        return f'/home/jasper/studie/MRP/{end}'
+    end = f'n{n_stars}/run_{run_id:>04}'
+    return f'{get_output_path()}/{end}'
 
 
 def get_output_path() -> str: 
@@ -22,6 +19,12 @@ def get_output_path() -> str:
     else:
         return f'/home/jasper/studie/MRP/output'
     
+
+def get_final_snapshot_filename(n_stars: int, run_id: int):
+    directory = get_run_directory(n_stars=n_stars, run_id=run_id)
+    filename = f'{directory}/final_snapshot_n{n_stars}_run{run_id}.amuse'
+    return filename
+
 
 def stitch_movie(image_directory: str, filename: str, out_directory: str, delete_images=False) -> None:
     command = f"ffmpeg -start_number 0 -i {image_directory}/movie-%04d.png -c:v libx264 -vb 20M -r 20 -pix_fmt yuv420p -filter:v 'setpts=2*PTS' -y {out_directory}/{filename}.mp4"
