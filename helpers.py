@@ -61,10 +61,15 @@ def read_snapshot_file(run_directory: str):
     snapshots = np.array([snapshot for snapshot in all_snapshots.history])
     return snapshots
 
-def get_final_snapshot(run_id: int, n_stars: int) -> Particles: 
+def get_final_snapshot_depr(run_id: int, n_stars: int) -> Particles: 
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
     all_snapshots = read_set_from_file(f"{run_directory}/snapshots.log", format='amuse', copy_history=False, close_file=True)
     return all_snapshots
+
+def get_final_snapshot(run_id: int, n_stars: int) -> Particles:
+    final_snapshot_fn = get_final_snapshot_filename(n_stars=n_stars, run_id=run_id)
+    final_snapshot = read_set_from_file(final_snapshot_fn, format='amuse', copy_history=False, close_file=True)
+    return final_snapshot
 
 def read_history_csv(run_id: int, n_stars: int) -> np.array:
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
@@ -74,9 +79,9 @@ def read_history_csv(run_id: int, n_stars: int) -> np.array:
 
 
 def get_run_ids_for_n_stars(n_stars: int):
-    if n_stars in [16, 64]:
+    if n_stars in [16, 32, 64]:
         run_ids = range(1000)
-    elif n_stars in [72, 80, 12, 14]:
+    elif n_stars in [72, 80, 12, 14, 128]:
         run_ids = range(500)
     else:
         raise NotImplementedError
