@@ -7,6 +7,8 @@ import os
 from amuse.io.base import IoException
 
 def get_quantities_for_snapshot(snapshot: Particles, initial_ke, header=False) -> str | tuple[str]:
+    # should: store the fhbh, not the hbh! so: traverse backward w/ theseus process. 
+    # the cluster doesn't care which two stars are in the final hard binary but we want formation history here
     if header:
         return 'time - T/T_0 - hardest_hardness - decomposition'
     

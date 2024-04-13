@@ -10,8 +10,8 @@ from amuse.plot import scatter
 from decompose_multiples import find_composite_multiples
 from helpers import get_run_directory, snapshot_at_time, read_snapshot_file
 
-N_STARS = 16
-RUN_NUMBER = 0
+N_STARS = 64
+RUN_NUMBER = 2
 SNAPSHOT_DIRECTORY = get_run_directory(n_stars=N_STARS, run_id=RUN_NUMBER)
 
 SNAPSHOTS = read_snapshot_file(run_directory=SNAPSHOT_DIRECTORY)
@@ -71,7 +71,7 @@ def plot(param):
         if focus_star_id == -1:
             focus_x, focus_y, focus_z = 0, 0, 0
         else:
-            focus_star = plummer[plummer.id == focus_star_id]
+            focus_star = plummer[plummer.id == f'{focus_star_id:>02}']
             focus_x = focus_star.position.x.value_in(nbody_system.length)
             focus_y = focus_star.position.y.value_in(nbody_system.length)
             focus_z = focus_star.position.z.value_in(nbody_system.length)
@@ -79,7 +79,6 @@ def plot(param):
         return focus_x, focus_y, focus_z
     
     focus_x, focus_y, focus_z = get_focus_star_pos()
-    
     # def dim_to_alpha(dim):
     #     absmax = np.max(np.abs(dim))
     #     neg_one_to_one_ish = np.array(dim) / absmax
@@ -146,10 +145,10 @@ window.geometry('2000x1200')
 
 plot_time_slider = tk.Scale(master = window,  
                      command = plot,
-                     from_ = 190,
-                     to = 200, 
+                     from_ = 30,
+                     to = 41, 
                      orient="horizontal",
-                     resolution = 0.01,
+                     resolution = 0.1,
                      tickinterval=1,
                     #  height = 10,  
                     #  width = 400, 
@@ -169,7 +168,7 @@ focus_id_slider = tk.Scale(master=window,
                           tickinterval=N_STARS/16,
                           length=1200)
 
-focus_id_slider.set(0)
+focus_id_slider.set(-1)
 focus_id_slider.pack()
 
 view_size_slider = tk.Scale(master=window,

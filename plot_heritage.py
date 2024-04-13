@@ -8,7 +8,7 @@ import scipy
 
 def plot_hardness_over_time():
     n_stars = 16
-    run_ids = range(100)
+    run_ids = [17]
     for rnid in custom_tqdm(run_ids, total=len(run_ids)):    
         times, hardnesses, _ = compile_heritage(run_id=rnid, n_stars=n_stars)
         fig, ax = plt.subplots(1,1, figsize=[8, 5])
@@ -110,28 +110,28 @@ def get_hbh_for_run(run_id: int, n_stars: int) -> tuple[np.array, np.array]:
 def plot_buncha_hardnesses_over_time():
     def plot_history_on_ax(ax, run_id, n_stars):
         nonlocal DNFS
-        # times, hardnesses, _ = compile_heritage(run_id=run_id, n_stars=n_stars)
-        times, hardnesses = get_hbh_for_run(run_id=run_id, n_stars=n_stars)
+        times, hardnesses, _ = compile_heritage(run_id=run_id, n_stars=n_stars)
+        # times, hardnesses = get_hbh_for_run(run_id=run_id, n_stars=n_stars)
 
         if len(hardnesses) == 0 or hardnesses[-1] < 10:
             DNFS.append(f'N{n_stars} run {run_id}')
             return
         
-        # times = times - times[-1]
+        times = times - times[-1]
         # hardnesses_smoothed = scipy.ndimage.maximum_filter1d(hardnesses, size=50)
         # mask = ((hardnesses < 10) & (hardnesses > 0))
-        mask = hardnesses > 0
+        # mask = hardnesses > 0
         dh = np.abs(np.diff(hardnesses))
         # ax.plot(times[mask], hardnesses[mask],
         ax.scatter(times[:-1][dh>0], dh[dh>0],
         # ax.scatter(times[1:][dh>0.1], hardnesses[1:][dh>0.1],
                      lw=1, 
                      c='black', 
-                     alpha=.1,
+                     alpha=.01,
                      s=.1,
                 )
         
-    run_ids = range(100)
+    run_ids = range(500)
     DNFS = []
     fig, (ax16, ax64) = plt.subplots(2,1, figsize=[8, 15], sharex=True, sharey=True, layout='constrained')
     for rnid in custom_tqdm(run_ids, total=len(run_ids)):    
@@ -170,7 +170,7 @@ def plot_stacked_hardnesses():
             _, dh = get_interactions_for_run(n_stars=n_stars, run_id=run_id)
             if len(dh) == 0:
                 continue
-            all_dh[i] = np.pad(dh, [0, all_dh.shape[1]-len(dh)])
+            all_dh[i] = np.pad(dh, [all_dh.shape[1]-len(dh), 0])
 
         np.save(file=filename, arr=all_dh)
         return all_dh
@@ -193,9 +193,11 @@ def plot_stacked_hardnesses():
     def plot_history_on_ax(ax, n_stars: int):
         all_dh = get_all_interactions_for_runs(n_stars=n_stars)
         all_times = np.ones_like(all_dh)
-        all_times[:] = np.arange(0, 200 - 1/128, 1/128)
+        all_times[:] = -1*np.arange(0, 200 - 1/128, 1/128)
 
-        hist2d, *_ = np.histogram2d(all_times.ravel()[all_dh.ravel() > 0], np.log10(all_dh.ravel()[all_dh.ravel() > 0]), bins=[100,10], density=True)
+        hist2d, *_ = np.histogram2d(all_times.ravel()[all_dh.ravel() > 0], 
+                                    np.log10(all_dh.ravel()[all_dh.ravel() > 0]), 
+                                    bins=[100,10], density=True)
         # print(hist2d)
         # ax.imshow(hist2d.T)
         # all_dh = np.digitize(all_dh, bins=[0, 1, 2])
@@ -225,5 +227,6 @@ def plot_stacked_hardnesses():
 if __name__ == "__main__":
     # hist_encounter_duration()
     # plot_hardness_over_time()
+    plot_hardness_over_time()
     # plot_buncha_hardnesses_over_time()
-    plot_stacked_hardnesses()
+    # plot_stacked_hardnesses()

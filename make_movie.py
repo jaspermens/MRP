@@ -12,7 +12,7 @@ from helpers import get_run_directory, read_snapshot_file, snapshot_at_time
 
 
 N_STARS = 16
-RUN_NUMBER = 42
+RUN_NUMBER = 0
 RUN_DIRECTORY = get_run_directory(n_stars=N_STARS, run_id=RUN_NUMBER)
 SNAPSHOTS = read_snapshot_file(run_directory=RUN_DIRECTORY)
 
@@ -139,10 +139,10 @@ def make_movie(from_time=0,
 
 
 if __name__ == '__main__':
-    focus_id = None
-    t_start = 0
-    t_end = 30
-    cadence = 1/16
+    focus_id = 4
+    t_start = 125
+    t_end = 133.7
+    cadence = 1/64
     movie_fn = f'star{focus_id if focus_id else 'COM'}_{t_start}to{t_end}'
 
     make_movie(from_time=t_start, 
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                delete_images=True, 
                movie_filename=movie_fn, 
                focus_star_id = focus_id, 
-               focus_size=5,
+               focus_size=1.5,
                )
 
     

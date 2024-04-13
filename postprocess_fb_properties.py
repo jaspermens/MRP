@@ -32,14 +32,20 @@ def get_final_binary_in_run(n_stars: int, run_id: int):
     final_binary.add_particle(final_snapshot[final_snapshot.id == primary_id])
     final_binary.add_particle(final_snapshot[final_snapshot.id == secondary_id])
 
-    return final_binary
+    return final_binary, final_snapshot
 
+def get_cluster_core_pos(snapshot: Particles):
+    core_pos, _, _ = snapshot.densitycentre_coreradius_coredens(number_of_neighbours=5)
+    return core_pos
 
 def get_final_bindist_ecc_for_run(n_stars: int, run_id: int) -> float:
-    final_binary = get_final_binary_in_run(n_stars=n_stars, run_id=run_id)
+    final_binary, final_snapshot = get_final_binary_in_run(n_stars=n_stars, run_id=run_id)
     if final_binary is None:
         return -1, -1
-    distance_to_cc = final_binary.center_of_mass().length().value_in(nbody_system.length)
+    
+    core_pos = get_cluster_core_pos(final_snapshot)
+
+    distance_to_cc = (final_binary.position - core_pos).length().value_in(nbody_system.length)
     eccentricity = orbital_elements_from_binary(final_binary)[3]
 
     return distance_to_cc, eccentricity
@@ -69,5 +75,43 @@ def get_final_binary_properties_for_n_stars(n_stars: int):
     return binary_props.T
 
 
+def test_densitycentre_finding():
+    from amuse.datamodel.particle_attributes import particle_potential
+    def myown_bound_subset(plummer):
+        distances_from_center = plummer.position.lengths().value_in(nbody_system.length)
+
+        farenough_stars = plummer[distances_from_center > np.percentile(distances_from_center, q=10)]
+        for star in farenough_stars:
+            total_energy = (particle_potential(plummer, star, G=nbody_system.G) + 0.5 * (star.velocity**2).sum()).value_in(nbody_system.length**2 * nbody_system.time**(-2))
+            # if ke > 0:
+            print(f'{star.id} - {total_energy}')
+        
+        print(len(plummer.bound_subset(G=nbody_system.G)))
+        print(plummer.bound_subset(G=nbody_system.G).id)
+        kes = np.array([(particle_potential(plummer, star, G=nbody_system.G) + 0.5 * (star.velocity**2).sum()).value_in(nbody_system.length**2 * nbody_system.time**(-2)) for star in farenough_stars])
+        print(len(kes[kes>=0]))
+        # print(farenough_stars.id)
+
+    n_stars = 64
+    run_id = 2
+
+    final_snapshot = get_final_snapshot(run_id=run_id, n_stars=n_stars)
+    myown_bound_subset(final_snapshot)
+    # print(final_snapshot.densitycentre_coreradius_coredens(number_of_neighbours=5))
+
+    # bound_subset = final_snapshot.bound_subset(G=nbody_system.G)
+    # print(bound_subset.id)
+    # print(bound_subset.densitycentre_coreradius_coredens(number_of_neighbours=5))
+
+    # print(get_final_bindist_ecc_for_run(n_stars=n_stars, run_id=run_id))
+
+
+def test_dc():
+    run_id = 10
+    n_stars = 16
+
+    print(get_final_binary_in_run(n_stars=n_stars, run_id=run_id)[0].position.length().value_in(nbody_system.length))
+    print(get_final_bindist_ecc_for_run(run_id=run_id, n_stars=n_stars))
+
 if __name__ == '__main__':
-    ...
+    test_dc()

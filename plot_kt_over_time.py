@@ -81,5 +81,5 @@ def get_lombscargle(t, m):
 
 if __name__ == '__main__':
     # plot_log_ke_history(run_number=3)
-    plot_buncha_ke_history()
+    plot_ke_history(run_number=0, n_bodies=16)
 
