@@ -140,97 +140,31 @@ def theseus_binary_in_snapshot(snapshot: Particles,
 
 ## Edots
 def edots_for_snapshot(snapshot: Particles, binary: Particles):
-    primary_pos, secondary_pos = binary.position.lengths().value_in(nbody_system.length)
-    other_pos = snapshot.position.lengths().value_in(nbody_system.length)
+    primary_pos, secondary_pos = binary.position.value_in(nbody_system.length)
+    other_pos = snapshot.position.value_in(nbody_system.length)
 
     primary_pf = powerfunc(component_pos=primary_pos, other_pos=other_pos) 
     secondary_pf = powerfunc(component_pos=secondary_pos, other_pos=other_pos) 
 
-    cmvel = binary.center_of_mass_velocity().length().value_in(nbody_system.length / nbody_system.time)
-    primary_vel, secondary_vel = binary.velocity.lengths().value_in(nbody_system.length / nbody_system.time)
+    cmvel = binary.center_of_mass_velocity().value_in(nbody_system.length / nbody_system.time)
+    primary_vel, secondary_vel = binary.velocity.value_in(nbody_system.length / nbody_system.time)
     
-    return - (primary_pf * (primary_vel - cmvel) + secondary_pf * (secondary_vel - cmvel))
+    return - (np.dot(primary_pf, (primary_vel - cmvel)) + np.dot(secondary_pf, (secondary_vel - cmvel)))
 
 def powerfunc(component_pos: np.ndarray, other_pos: np.ndarray):
-    return - (component_pos - other_pos) / (np.linalg.norm(component_pos - other_pos)**3)
+    posdiffs = component_pos - other_pos
+    posdiffs[posdiffs < 1e-4] = 1
+    power =  - posdiffs / (np.linalg.norm(posdiffs, axis=1)**3).reshape(-1,1)
+    power[posdiffs == 0] = 0
+    return power
 
-## misc
-def get_line_for_snapshot(snapshot, binary, hardness, decomp) -> str | tuple[str]:
-    # time = snapshot.get_timestamp()
-    binary, hardness_kt0 = next(binary_generator)
-
-    # decomp:
-    ids = find_composite_multiples(plummer=snapshot.copy(), 
-                                   initial_ke=initial_ke, 
-                                   min_hardness_kt=1)
-    
-    decomp = [id for id in ids if len(id) > 5]
-
-    # T/T0:
-    relative_temperature = snapshot.kinetic_energy()/initial_ke
-    
-    # find the theseus version of the fhb
-    # we could probably speed this up with an educated guess type thing
-    # so:    
-    theseus_binary_finder = theseus_binary_generator(snapshots=snapshots, 
-                                                     initial_ke=initial_ke, 
-                                                     min_hardness_kt0=0.1,
-                                                     final_binary=final_hard_binary)
-    
-    binary, hardness_kt0 = next(theseus_binary_finder)
-
-    binary, hardness, patience = theseus_binary_in_snapshot(snapshot=snapshot, 
-                                                            last_binary=last_binary, 
-                                                            patience=patience, 
-                                                            min_hardness_kt0=.1,
-                                                            hardness_prefactor=hardness_prefactor)
-    
-    # fhb_hardness:
-    hardest_hardness = get_max_hardness_in_decomp_list(decomp_list=decomp)
-
-    # distances:        
-    # this one's easy enough- just: (unless there's a built-in amuse thing here but I doubt it's better) 
-    distances = (snapshot.position - hbinary.position).lengths().value_in(nbody_system.length)
-
-    # edots:    
-    # ok so we'll do it per star wrt the binary. 
-    # this might do some fucky stuff with binary-binary interactions
-
-    return (
-            f'{time.value_in(nbody_system.time):.3f}', 
-            f'{relative_temperature:.3f}', 
-            f'{hardest_hardness:.3f}', 
-            str(decomp),
-            )
-
-def theseus_binary_generator(snapshots: list[Particles],
-                             min_hardness_kt0: float,
-                             initial_ke,
-                             final_binary: Particles,
-                             ):
-
-    binary = final_binary
-    for snapshot in snapshots:
-        # to convert the kT0 hardness to current temperature hardness:
-        hardness_prefactor = 2/3 * initial_ke / snapshot.kinetic_energy()
-
-        binary, hardness, patience = theseus_binary_in_snapshot(snapshot=snapshot,
-                                                                last_binary=binary,
-                                                                patience=patience,
-                                                                min_hardness_kt0=min_hardness_kt0,
-                                                                hardness_prefactor=hardness_prefactor)
-        hardness_kt0 = hardness / hardness_prefactor
-        
-        yield binary, hardness_kt0
 
 ## logistics
 def claim_run(run_id: int, n_stars: int):
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
-    claimed_flag = f'{run_directory}/claimed.txt'
+    claimed_flag = f'{run_directory}/postprocess_v3.5.txt'
 
     os.mknod(claimed_flag) # will raise a FileExistsError if the file already exists
-    if os.path.exists(f'{run_directory}/decompositions.txt'):
-        raise FileExistsError  # this is just a double check- technically not necessary 
 
 def redo_decomp(n_stars: int, start_num: int = 0):
     run_id = start_num
@@ -306,8 +240,8 @@ def redo_decomp_for_run(run_id: int, n_stars: int, min_hardness_kt0: float = 0.1
         current_binary_ids = current_binary.id.astype(int)
         edots[current_binary_ids] = 0
 
-        line_edots = str(edots.astype("U3")).replace("\n", "").replace("'", "")
-        line_comdists = str(dists.astype("U3")).replace("\n", "").replace("'", "")
+        line_edots = str(edots.astype("U4")).replace("\n", "").replace("'", "")
+        line_comdists = str(dists.astype("U4")).replace("\n", "").replace("'", "")
         line_friends = str(closest_star_ids).replace("'", "")
 
         line = np.array([line_time, 
@@ -333,12 +267,13 @@ def redo_decomp_for_run(run_id: int, n_stars: int, min_hardness_kt0: float = 0.1
                                        dists, 
                                        edots, 
                                        patience], dtype=object)
+        
 
     np.save(f"{run_directory}/distances", all_distances)
-    np.save(f"{run_directory}/edots", all_edots)
+    np.save(f"{run_directory}/edots2", all_edots)
     np.save(f"{run_directory}/hardnesses", all_hardnesses)
-    np.savetxt(f"{run_directory}/postprocess3.txt", csvlines, fmt="%s  %s  %s  %3s  %s  %s  %s  %s", header=header)
-    np.save(f"{run_directory}/postprocess3", pickle_array, allow_pickle=True)
+    np.savetxt(f"{run_directory}/postprocess3.5.txt", csvlines, fmt="%s  %s  %s  %3s  %s  %s  %s  %s", header=header)
+    np.save(f"{run_directory}/postprocess3.5", pickle_array, allow_pickle=True)
 
 def test_theseus_binary():
     n_stars = 16
@@ -407,5 +342,5 @@ if __name__ == '__main__':
     # TODO: also write distances and edots out to npz while we're at it right?
     # test_theseus_binary()
     # hist_dists()
-    for i in custom_tqdm(range(50), total=50):
-        redo_decomp_for_run(run_id=i, n_stars=16, min_hardness_kt0=0.1)
+
+    redo_decomp_for_run(run_id=10, n_stars=64, min_hardness_kt0=0.1)
