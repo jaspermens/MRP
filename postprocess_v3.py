@@ -143,18 +143,18 @@ def edots_for_snapshot(snapshot: Particles, binary: Particles):
     primary_pos, secondary_pos = binary.position.value_in(nbody_system.length)
     other_pos = snapshot.position.value_in(nbody_system.length)
 
-    primary_pf = powerfunc(component_pos=primary_pos, other_pos=other_pos) 
-    secondary_pf = powerfunc(component_pos=secondary_pos, other_pos=other_pos) 
+    primary_pf = powerfunc(component_pos=primary_pos, other_pos=other_pos, particle_mass = 1/len(snapshot)) 
+    secondary_pf = powerfunc(component_pos=secondary_pos, other_pos=other_pos, particle_mass = 1/len(snapshot)) 
 
     cmvel = binary.center_of_mass_velocity().value_in(nbody_system.length / nbody_system.time)
     primary_vel, secondary_vel = binary.velocity.value_in(nbody_system.length / nbody_system.time)
     
     return - (np.dot(primary_pf, (primary_vel - cmvel)) + np.dot(secondary_pf, (secondary_vel - cmvel)))
 
-def powerfunc(component_pos: np.ndarray, other_pos: np.ndarray):
+def powerfunc(component_pos: np.ndarray, other_pos: np.ndarray, particle_mass: float):
     posdiffs = component_pos - other_pos
     posdiffs[posdiffs < 1e-4] = 1
-    power =  - posdiffs / (np.linalg.norm(posdiffs, axis=1)**3).reshape(-1,1)
+    power =  - posdiffs * particle_mass * particle_mass / (np.linalg.norm(posdiffs, axis=1)**3).reshape(-1,1)
     power[posdiffs == 0] = 0
     return power
 
