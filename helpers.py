@@ -12,6 +12,26 @@ def get_run_directory(n_stars: int, run_id: int) -> str:
     end = f'n{n_stars}/run_{run_id:>04}'
     return f'{get_output_path()}/{end}'
 
+def dists_for_run(run_id: int, n_stars: int) -> np.ndarray:
+    run_directory = get_run_directory(run_id=run_id, n_stars=n_stars)
+    dists = np.load(f"{run_directory}/distances.npy")
+
+    return dists
+
+def edots_for_run(run_id: int, n_stars: int) -> np.ndarray:
+    run_directory = get_run_directory(run_id=run_id, n_stars=n_stars)
+    try:
+        edots = np.load(f"{run_directory}/edots2.npy")
+    except FileNotFoundError:
+        edots = np.load(f"{run_directory}/edots.npy")
+    return edots
+
+def hardnesses_for_run(run_id: int, n_stars: int) -> np.ndarray:
+    run_directory = get_run_directory(run_id=run_id, n_stars=n_stars)
+    hardnesses = np.load(f"{run_directory}/hardnesses.npy")
+
+    return hardnesses
+
 
 def get_output_path() -> str: 
     if running_on_alice():
