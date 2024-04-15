@@ -41,7 +41,7 @@ def plot_coredist_cdfs(n_stars: int | list[int] | None = None):
         n_stars = [n_stars]
     
     if n_stars is None:
-        n_stars = [12, 14, 16, 64, 72, 80]
+        n_stars = [12, 14, 16, 32, 64, 72, 80, 128]
         
     fig, ax = plt.subplots(1,1, figsize=[5,5])
 
@@ -49,7 +49,7 @@ def plot_coredist_cdfs(n_stars: int | list[int] | None = None):
         # put_cdf_with_errorbars_on_ax(n_stars=n, ax=ax)
         put_cdf_on_ax(n_stars=n, ax=ax)
 
-    ax.plot(x:= np.arange(0.01,1, .0001), x**2, c='black')
+    ax.plot(x:= np.arange(0.01,1, .0001), x**2.4, c='black', label='e^2.4')
     ax.legend()
     ax.set_title('CDF of hard binary eccentricity @ T_cc')
     ax.set_ylim(0.01, 1.01)

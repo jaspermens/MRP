@@ -21,16 +21,20 @@ def get_final_binary_ids_in_run(n_stars: int, run_id: int):
 
 
 def get_final_binary_in_run(n_stars: int, run_id: int):
-    final_binary_ids = get_final_binary_ids_in_run(n_stars=n_stars, run_id=run_id)
-    if final_binary_ids is None:
-        return None
+    # final_binary_ids = get_final_binary_ids_in_run(n_stars=n_stars, run_id=run_id)
+    # if final_binary_ids is None:
+    #     return None
     
     final_snapshot = get_final_snapshot(n_stars=n_stars, run_id=run_id)
 
-    primary_id, secondary_id = final_binary_ids
-    final_binary = Particles()
-    final_binary.add_particle(final_snapshot[final_snapshot.id == primary_id])
-    final_binary.add_particle(final_snapshot[final_snapshot.id == secondary_id])
+    final_binaries = final_snapshot.get_binaries(G=nbody_system.G, hardness=1) # TODO: hist hardness (in non-initial kT) to check if 1 is actually correct
+    hardnesses = [binary[0].hardness for binary in final_binaries]
+    final_binary = final_binaries[np.argmax(hardnesses)]
+
+    # primary_id, secondary_id = final_binary_ids
+    # final_binary = Particles()
+    # final_binary.add_particle(final_snapshot[final_snapshot.id == primary_id])
+    # final_binary.add_particle(final_snapshot[final_snapshot.id == secondary_id])
 
     return final_binary, final_snapshot
 
