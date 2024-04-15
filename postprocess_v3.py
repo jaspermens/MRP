@@ -118,13 +118,12 @@ def theseus_binary_in_snapshot(snapshot: Particles,
 
     max_hardness = 0
     for component_id in last_binary.id:
-        candidate_binary_ids, candidate_hardness, candidate_binary = get_binary_with_star(star_id=int(component_id), 
+        _, candidate_hardness, candidate_binary = get_binary_with_star(star_id=int(component_id), 
                                                                                           particles=snapshot, 
                                                                                           min_hardness=min_hardness_kt0 * hardness_prefactor)
         if candidate_hardness > max_hardness:
             max_hardness = candidate_hardness
             binary = candidate_binary
-            binary_ids = candidate_binary_ids
 
     hardness = max_hardness/hardness_prefactor  
 
@@ -154,54 +153,6 @@ def edots_for_snapshot(snapshot: Particles, binary: Particles):
 def powerfunc(component_pos: np.ndarray, other_pos: np.ndarray):
     return - (component_pos - other_pos) / (np.linalg.norm(component_pos - other_pos)**3)
 
-## misc
-def get_line_for_snapshot(snapshot, binary, hardness, decomp) -> str | tuple[str]:
-    # time = snapshot.get_timestamp()
-    binary, hardness_kt0 = next(binary_generator)
-
-    # decomp:
-    ids = find_composite_multiples(plummer=snapshot.copy(), 
-                                   initial_ke=initial_ke, 
-                                   min_hardness_kt=1)
-    
-    decomp = [id for id in ids if len(id) > 5]
-
-    # T/T0:
-    relative_temperature = snapshot.kinetic_energy()/initial_ke
-    
-    # find the theseus version of the fhb
-    # we could probably speed this up with an educated guess type thing
-    # so:    
-    theseus_binary_finder = theseus_binary_generator(snapshots=snapshots, 
-                                                     initial_ke=initial_ke, 
-                                                     min_hardness_kt0=0.1,
-                                                     final_binary=final_hard_binary)
-    
-    binary, hardness_kt0 = next(theseus_binary_finder)
-
-    binary, hardness, patience = theseus_binary_in_snapshot(snapshot=snapshot, 
-                                                            last_binary=last_binary, 
-                                                            patience=patience, 
-                                                            min_hardness_kt0=.1,
-                                                            hardness_prefactor=hardness_prefactor)
-    
-    # fhb_hardness:
-    hardest_hardness = get_max_hardness_in_decomp_list(decomp_list=decomp)
-
-    # distances:        
-    # this one's easy enough- just: (unless there's a built-in amuse thing here but I doubt it's better) 
-    distances = (snapshot.position - hbinary.position).lengths().value_in(nbody_system.length)
-
-    # edots:    
-    # ok so we'll do it per star wrt the binary. 
-    # this might do some fucky stuff with binary-binary interactions
-
-    return (
-            f'{time.value_in(nbody_system.time):.3f}', 
-            f'{relative_temperature:.3f}', 
-            f'{hardest_hardness:.3f}', 
-            str(decomp),
-            )
 
 def theseus_binary_generator(snapshots: list[Particles],
                              min_hardness_kt0: float,
@@ -229,8 +180,9 @@ def claim_run(run_id: int, n_stars: int):
     claimed_flag = f'{run_directory}/claimed.txt'
 
     os.mknod(claimed_flag) # will raise a FileExistsError if the file already exists
-    if os.path.exists(f'{run_directory}/decompositions.txt'):
-        raise FileExistsError  # this is just a double check- technically not necessary 
+    # if os.path.exists(f'{run_directory}/decompositions.txt'):
+    #     raise FileExistsError  # this is just a double check- technically not necessary 
+
 
 def redo_decomp(n_stars: int, start_num: int = 0):
     run_id = start_num
@@ -258,22 +210,31 @@ def redo_decomp_for_run(run_id: int, n_stars: int, min_hardness_kt0: float = 0.1
     run_directory = get_run_directory(n_stars=n_stars, run_id=run_id)
 
     snapshots = read_snapshot_file(run_directory=run_directory)
-    initial_ke = snapshots[0].kinetic_energy()
     
-    final_hardness_prefactor = 2/3 * initial_ke / snapshots[-1].kinetic_energy()
-    final_binary = snapshots[-1].get_binaries(hardness=10*final_hardness_prefactor, G=nbody_system.G)[0]
-
     header = "time - T/T0 - binary - hardness - nearest neighbors - distances to com - energy exchange rates - patience"
-    csvlines = np.zeros(shape=(len(snapshots), len(header.split(' - '))), dtype='U2000')
-
+    
     pickle_array = np.zeros(shape=(len(snapshots), len(header.split(' - '))), dtype=object)
-
-    current_binary = final_binary
-    patience = 0
-
     all_distances = np.zeros(shape=(len(snapshots), n_stars), dtype=float)
     all_edots = np.zeros_like(all_distances)
     all_hardnesses = np.zeros(shape=(len(snapshots)), dtype=float)
+    csvlines = np.zeros(shape=(len(snapshots), len(header.split(' - '))), dtype='U2000')
+
+    initial_ke = snapshots[0].kinetic_energy()
+    
+    final_hardness_prefactor = 2/3 * initial_ke / snapshots[-1].kinetic_energy()
+    try:
+        final_binary = snapshots[-1].get_binaries(hardness=10*final_hardness_prefactor, G=nbody_system.G)[0]
+    except IndexError:
+        np.save(f"{run_directory}/distances", all_distances)
+        np.save(f"{run_directory}/edots", all_edots)
+        np.save(f"{run_directory}/hardnesses", all_hardnesses)
+        np.savetxt(f"{run_directory}/postprocess3.txt", csvlines, fmt="%s  %s  %s  %3s  %s  %s  %s  %s", header=header)
+        np.save(f"{run_directory}/postprocess3", pickle_array, allow_pickle=True)
+        return
+    
+    current_binary = final_binary
+    patience = 0
+
 
     for i, snapshot in enumerate(snapshots[::-1]):
         time = snapshot.get_timestamp().value_in(nbody_system.time)
